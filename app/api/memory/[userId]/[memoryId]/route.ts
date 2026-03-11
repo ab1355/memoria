@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
 import { store } from '@/lib/store';
-
-function checkAuth(req: Request) {
-  const apiKey = req.headers.get('authorization')?.split('Bearer ')[1];
-  const expectedKey = process.env.MEMORIA_API_KEY;
-  if (expectedKey && apiKey !== expectedKey) {
-    return false;
-  }
-  return true;
-}
+import { checkAuth } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function DELETE(
   request: Request,
@@ -27,6 +20,22 @@ export async function DELETE(
   } catch (error: any) {
     console.error("[DELETE /api/memory] Failed to resolve parameters:", error.stack || error);
     return NextResponse.json({ error: 'Invalid request parameters.' }, { status: 400 });
+  }
+
+  // Rate limiting: 100 requests per minute per user for DELETE
+  const rateLimit = checkRateLimit(`delete_${userId}`, 100, 60000);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+        }
+      }
+    );
   }
 
   try {

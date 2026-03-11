@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
 import { store } from '@/lib/store';
 import { generateEmbedding } from '@/lib/gemini';
-
-function checkAuth(req: Request) {
-  const apiKey = req.headers.get('authorization')?.split('Bearer ')[1];
-  const expectedKey = process.env.MEMORIA_API_KEY;
-  if (expectedKey && apiKey !== expectedKey) {
-    return false;
-  }
-  return true;
-}
+import { checkAuth } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(
   request: Request,
@@ -21,6 +14,23 @@ export async function POST(
 
   try {
     const { userId } = await params;
+
+    // Rate limiting: 50 requests per minute per user for POST
+    const rateLimit = checkRateLimit(`post_${userId}`, 50, 60000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.reset.toString(),
+          }
+        }
+      );
+    }
+
     const body = await request.json();
     const { text } = body;
 
@@ -37,9 +47,9 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to generate embedding for the provided text. Please check your AI provider configuration.' }, { status: 502 });
     }
 
-    // Store the memory
+    // Store the memory using a valid UUID for ClickHouse compatibility
     const memory = {
-      id: `mem_${Math.random().toString(36).substring(2, 11)}`,
+      id: crypto.randomUUID(),
       userId,
       text,
       embedding,
@@ -79,6 +89,22 @@ export async function GET(
   } catch (error: any) {
     console.error("[GET /api/memory] Failed to resolve parameters:", error.stack || error);
     return NextResponse.json({ error: 'Invalid request parameters.' }, { status: 400 });
+  }
+
+  // Rate limiting: 100 requests per minute per user for GET
+  const rateLimit = checkRateLimit(`get_${userId}`, 100, 60000);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+        }
+      }
+    );
   }
 
   try {

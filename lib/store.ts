@@ -87,7 +87,8 @@ export const store = {
     if (chClient) {
       // ClickHouse mutations are async, but fine for this use case
       await chClient.command({
-        query: `ALTER TABLE memories DELETE WHERE userId = '${userId}' AND id = '${memoryId}'`
+        query: `ALTER TABLE memories DELETE WHERE userId = {userId:String} AND id = {memoryId:UUID}`,
+        query_params: { userId, memoryId }
       });
     } else {
       localStore.deleteMemory(userId, memoryId);
