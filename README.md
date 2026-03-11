@@ -122,11 +122,21 @@ Once connected to any of the above clients, the AI will automatically have acces
 
 ## 💻 API Documentation
 
+### 0. Health Check
+`GET /api/health`
+
+Check if the service is online and ready to accept traffic. Does not require authentication.
+
+```bash
+curl -X GET https://api.memoria.ai/api/health
+```
+
 ### 1. Store Memory
 `POST /api/memory/[userId]`
 
 ```bash
-curl -X POST https://api.memoria.ai/v1/memory/user_123 \
+curl -X POST https://api.memoria.ai/api/memory/user_123 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"text": "I am allergic to peanuts"}'
 ```
@@ -135,8 +145,30 @@ curl -X POST https://api.memoria.ai/v1/memory/user_123 \
 `GET /api/memory/[userId]/context?query=[your_query]&topK=3`
 
 ```bash
-curl -X GET "https://api.memoria.ai/v1/memory/user_123/context?query=recipe_recommendations"
+curl -X GET "https://api.memoria.ai/api/memory/user_123/context?query=recipe_recommendations" \
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
+
+### 3. List Memories
+`GET /api/memory/[userId]`
+
+Retrieve all stored memories for a specific user.
+
+### 4. Forget Memory
+`DELETE /api/memory/[userId]/[memoryId]`
+
+Delete a specific memory by its ID.
+
+## 🛡️ Security & Rate Limiting
+
+- **Multi-Tenant API Keys:** Memoria supports multiple API keys. You can set a single key via `MEMORIA_API_KEY` or a comma-separated list of keys via `MEMORIA_API_KEYS` (e.g., `key1,key2,key3`).
+- **Rate Limiting:** To protect your infrastructure and AI provider credits, Memoria includes a built-in, self-cleaning rate limiter:
+  - `POST` (Store): 50 req/min per user
+  - `GET` (Context Search): 50 req/min per user
+  - `GET` (List): 100 req/min per user
+  - `DELETE`: 100 req/min per user
+
+Exceeding these limits returns a `429 Too Many Requests` with standard `X-RateLimit-*` headers.
 
 ## 💎 Economic Integration Protocol (371 DAO)
 
