@@ -9,7 +9,7 @@ export type Memory = {
   createdAt: number;
 };
 
-class MemoryStore {
+export class MemoryStore {
   private memories: Memory[] = [];
   private dataFile = path.join(process.cwd(), 'data', 'memories.json');
 
@@ -47,6 +47,11 @@ class MemoryStore {
 
   getMemories(userId: string) {
     return this.memories.filter(m => m.userId === userId);
+  }
+
+  deleteMemory(userId: string, memoryId: string) {
+    this.memories = this.memories.filter(m => !(m.userId === userId && m.id === memoryId));
+    this.save();
   }
 
   search(userId: string, queryEmbedding: number[], topK: number = 5) {

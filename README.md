@@ -11,10 +11,24 @@ Memoria accelerates pattern recognition and hyper-focus channeling by offloading
 ## 🚀 Features
 
 - **Zero-Setup Vector Store:** Send text, and we automatically embed and store it using Google Gemini Embeddings (`gemini-embedding-2-preview`).
-- **Frictionless Storage:** Memories are stored locally in a persistent `data/memories.json` file. No external databases (Pinecone, pgvector) required for the prototype, ensuring instant deployment.
+- **Frictionless Storage:** Memories are stored locally in a persistent `data/memories.json` file by default. 
+- **Enterprise Scale with ClickHouse:** Instantly scale to billions of vectors by providing a `CLICKHOUSE_HOST`. Memoria automatically switches from local JSON to ClickHouse for high-performance vector search.
 - **Model Context Protocol (MCP) Server:** Fully compatible with Claude Desktop and Cursor via the included MCP Server.
 - **Semantic Retrieval:** Query by meaning, not just keywords.
-- **User Segregation:** Strict partitioning by `userId` for privacy and security.
+- **User Segregation & Security:** Strict partitioning by `userId` and secured via `MEMORIA_API_KEY` authentication.
+
+## 🐳 1-Click Deployment (Docker & Akash)
+
+Memoria is designed for frictionless deployment on decentralized and traditional clouds.
+
+### Docker Compose
+Run Memoria and ClickHouse locally with a single command:
+```bash
+docker-compose up -d
+```
+
+### Akash Network (Decentralized Cloud)
+Deploy to the Akash Network using the included `akash.yml` Stack Definition Language (SDL) file. This provisions both the Memoria API and a ClickHouse database on decentralized compute.
 
 ## 🔌 Model Context Protocol (MCP) Integration
 

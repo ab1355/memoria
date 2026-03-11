@@ -1,11 +1,24 @@
 import { NextResponse } from 'next/server';
-import { globalMemoryStore } from '@/lib/memory-store';
+import { store } from '@/lib/store';
 import { generateEmbedding } from '@/lib/gemini';
+
+function checkAuth(req: Request) {
+  const apiKey = req.headers.get('authorization')?.split('Bearer ')[1];
+  const expectedKey = process.env.MEMORIA_API_KEY;
+  if (expectedKey && apiKey !== expectedKey) {
+    return false;
+  }
+  return true;
+}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { userId } = await params;
     const body = await request.json();
@@ -27,7 +40,7 @@ export async function POST(
       createdAt: Date.now(),
     };
 
-    globalMemoryStore.addMemory(memory);
+    await store.addMemory(memory);
 
     return NextResponse.json({ 
       success: true, 
@@ -44,12 +57,16 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { userId } = await params;
-    const memories = globalMemoryStore.getMemories(userId);
+    const memories = await store.getMemories(userId);
     
     return NextResponse.json({
-      memories: memories.map(m => ({ id: m.id, text: m.text, createdAt: m.createdAt }))
+      memories: memories.map((m: any) => ({ id: m.id, text: m.text, createdAt: m.createdAt }))
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

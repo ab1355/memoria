@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Search, Database, Loader2, Trash2 } from 'lucide-react
 
 export default function Playground() {
   const [userId, setUserId] = useState('user_123');
+  const [apiKey, setApiKey] = useState('');
   const [memoryText, setMemoryText] = useState('');
   const [queryText, setQueryText] = useState('');
   
@@ -15,11 +16,19 @@ export default function Playground() {
   const [memories, setMemories] = useState<any[]>([]);
   const [queryResults, setQueryResults] = useState<any>(null);
 
+  const getHeaders = () => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+    return headers;
+  };
+
   useEffect(() => {
     // Fetch all memories for the user
     const fetchMemories = async () => {
       try {
-        const res = await fetch(`/api/memory/${userId}`);
+        const res = await fetch(`/api/memory/${userId}`, { headers: getHeaders() });
         if (res.ok) {
           const data = await res.json();
           setMemories(data.memories || []);
@@ -30,11 +39,11 @@ export default function Playground() {
     };
 
     fetchMemories();
-  }, [userId]);
+  }, [userId, apiKey]);
 
   const fetchMemoriesManual = async () => {
     try {
-      const res = await fetch(`/api/memory/${userId}`);
+      const res = await fetch(`/api/memory/${userId}`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
         setMemories(data.memories || []);
@@ -52,18 +61,38 @@ export default function Playground() {
     try {
       const res = await fetch(`/api/memory/${userId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ text: memoryText }),
       });
       
       if (res.ok) {
         setMemoryText('');
         fetchMemoriesManual();
+      } else {
+        const data = await res.json();
+        alert(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error("Failed to add memory", error);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleDeleteMemory = async (memoryId: string) => {
+    try {
+      const res = await fetch(`/api/memory/${userId}/${memoryId}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        fetchMemoriesManual();
+      } else {
+        const data = await res.json();
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Failed to delete memory", error);
     }
   };
 
@@ -73,10 +102,15 @@ export default function Playground() {
 
     setIsQuerying(true);
     try {
-      const res = await fetch(`/api/memory/${userId}/context?query=${encodeURIComponent(queryText)}&topK=3`);
+      const res = await fetch(`/api/memory/${userId}/context?query=${encodeURIComponent(queryText)}&topK=3`, {
+        headers: getHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setQueryResults(data);
+      } else {
+        const data = await res.json();
+        alert(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error("Failed to query memory", error);
@@ -105,15 +139,27 @@ export default function Playground() {
           {/* User Config */}
           <div className="p-6 rounded-2xl bg-zinc-900 border border-zinc-800">
             <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Configuration</h2>
-            <div>
-              <label className="block text-sm font-medium mb-2">Active User ID</label>
-              <input 
-                type="text" 
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
-              />
-              <p className="text-xs text-zinc-500 mt-2">Memories are strictly partitioned by this ID.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Active User ID</label>
+                <input 
+                  type="text" 
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                />
+                <p className="text-xs text-zinc-500 mt-2">Memories are strictly partitioned by this ID.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">API Key (Optional)</label>
+                <input 
+                  type="password" 
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Enter MEMORIA_API_KEY if configured"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                />
+              </div>
             </div>
           </div>
 
@@ -155,8 +201,15 @@ export default function Playground() {
             ) : (
               <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                 {memories.map((m) => (
-                  <div key={m.id} className="p-3 rounded-lg bg-zinc-950 border border-zinc-800/50 text-sm">
-                    <p className="text-zinc-300">{m.text}</p>
+                  <div key={m.id} className="p-3 rounded-lg bg-zinc-950 border border-zinc-800/50 text-sm group relative">
+                    <p className="text-zinc-300 pr-8">{m.text}</p>
+                    <button 
+                      onClick={() => handleDeleteMemory(m.id)}
+                      className="absolute top-3 right-3 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Forget Memory"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/50">
                       <span className="text-[10px] font-mono text-zinc-600">{m.id}</span>
                       <span className="text-[10px] text-zinc-500">{new Date(m.createdAt).toLocaleTimeString()}</span>

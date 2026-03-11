@@ -1,11 +1,24 @@
 import { NextResponse } from 'next/server';
-import { globalMemoryStore } from '@/lib/memory-store';
+import { store } from '@/lib/store';
 import { generateEmbedding } from '@/lib/gemini';
+
+function checkAuth(req: Request) {
+  const apiKey = req.headers.get('authorization')?.split('Bearer ')[1];
+  const expectedKey = process.env.MEMORIA_API_KEY;
+  if (expectedKey && apiKey !== expectedKey) {
+    return false;
+  }
+  return true;
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { userId } = await params;
     const { searchParams } = new URL(request.url);
@@ -20,11 +33,11 @@ export async function GET(
     const queryEmbedding = await generateEmbedding(query);
     
     // Search the memory store
-    const results = globalMemoryStore.search(userId, queryEmbedding, topK);
+    const results = await store.search(userId, queryEmbedding, topK);
 
     return NextResponse.json({
-      context: results.map(r => r.text),
-      results: results.map(r => ({ 
+      context: results.map((r: any) => r.text),
+      results: results.map((r: any) => ({ 
         id: r.id, 
         text: r.text, 
         score: r.score 

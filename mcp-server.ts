@@ -4,6 +4,14 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 
 // Ensure we hit the local Next.js API to utilize the Gemini embedding pipeline
 const API_URL = process.env.APP_URL || "http://localhost:3000";
+const API_KEY = process.env.MEMORIA_API_KEY || "";
+
+const headers: Record<string, string> = {
+  "Content-Type": "application/json",
+};
+if (API_KEY) {
+  headers["Authorization"] = `Bearer ${API_KEY}`;
+}
 
 const server = new Server(
   {
@@ -44,6 +52,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["userId", "query"],
         },
+      },
+      {
+        name: "forget_memory",
+        description: "Delete a specific memory by its ID for a user.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            userId: { type: "string", description: "The ID of the user" },
+            memoryId: { type: "string", description: "The ID of the memory to delete" }
+          },
+          required: ["userId", "memoryId"],
+        },
       }
     ],
   };
@@ -55,7 +75,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const res = await fetch(`${API_URL}/api/memory/${args.userId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ text: args.text }),
       });
       const data = await res.json();
@@ -74,13 +94,34 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = request.params.arguments as { userId: string; query: string; topK?: number };
     try {
       const topK = args.topK || 3;
-      const res = await fetch(`${API_URL}/api/memory/${args.userId}/context?query=${encodeURIComponent(args.query)}&topK=${topK}`);
+      const res = await fetch(`${API_URL}/api/memory/${args.userId}/context?query=${encodeURIComponent(args.query)}&topK=${topK}`, {
+        headers
+      });
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error || "Failed to retrieve context");
       
       return {
         content: [{ type: "text", text: JSON.stringify(data.context, null, 2) }],
+      };
+    } catch (e: any) {
+      return { content: [{ type: "text", text: `Error: ${e.message}` }], isError: true };
+    }
+  }
+
+  if (request.params.name === "forget_memory") {
+    const args = request.params.arguments as { userId: string; memoryId: string };
+    try {
+      const res = await fetch(`${API_URL}/api/memory/${args.userId}/${args.memoryId}`, {
+        method: "DELETE",
+        headers
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Failed to delete memory");
+      
+      return {
+        content: [{ type: "text", text: `Memory deleted successfully.` }],
       };
     } catch (e: any) {
       return { content: [{ type: "text", text: `Error: ${e.message}` }], isError: true };
