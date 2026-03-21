@@ -14,6 +14,9 @@ export default function Home() {
           <nav className="flex items-center gap-6 text-sm font-medium text-zinc-400">
             <Link href="#features" className="hover:text-zinc-50 transition-colors">Features</Link>
             <Link href="#docs" className="hover:text-zinc-50 transition-colors">Documentation</Link>
+            <Link href="/chat" className="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+              <Brain className="w-4 h-4" /> Agent
+            </Link>
             <Link href="/playground" className="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1">
               Playground <ArrowRight className="w-4 h-4" />
             </Link>
@@ -44,6 +47,13 @@ export default function Home() {
                 chunking, and retrieval so you can focus on building.
               </p>
               <div className="flex flex-wrap items-center gap-4">
+                <Link 
+                  href="/chat" 
+                  className="h-12 px-6 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-2 transition-colors"
+                >
+                  <Brain className="w-4 h-4" />
+                  Talk to Agent
+                </Link>
                 <Link 
                   href="/playground" 
                   className="h-12 px-6 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold flex items-center gap-2 transition-colors"
