@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import { Send, Settings, Brain, Trash2, Search, Save, Loader2, User } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,37 +21,37 @@ type Message = {
   toolCalls?: ToolCall[];
 };
 
-const storeMemoryFunc: FunctionDeclaration = {
+const storeMemoryFunc = {
   name: "storeMemory",
   description: "Save a new fact or memory about the user.",
   parameters: {
-    type: Type.OBJECT,
+    type: "OBJECT" as any,
     properties: {
-      text: { type: Type.STRING, description: "The fact to remember." }
+      text: { type: "STRING" as any, description: "The fact to remember." }
     },
     required: ["text"]
   }
 };
 
-const retrieveContextFunc: FunctionDeclaration = {
+const retrieveContextFunc = {
   name: "retrieveContext",
   description: "Search the user's memory for relevant facts.",
   parameters: {
-    type: Type.OBJECT,
+    type: "OBJECT" as any,
     properties: {
-      query: { type: Type.STRING, description: "The search query." }
+      query: { type: "STRING" as any, description: "The search query." }
     },
     required: ["query"]
   }
 };
 
-const forgetMemoryFunc: FunctionDeclaration = {
+const forgetMemoryFunc = {
   name: "forgetMemory",
   description: "Delete a specific memory by ID.",
   parameters: {
-    type: Type.OBJECT,
+    type: "OBJECT" as any,
     properties: {
-      memoryId: { type: Type.STRING, description: "The ID of the memory to delete." }
+      memoryId: { type: "STRING" as any, description: "The ID of the memory to delete." }
     },
     required: ["memoryId"]
   }
@@ -80,14 +80,18 @@ export default function ChatInterface() {
 
   // Initialize Chat Session
   useEffect(() => {
-    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
-    chatRef.current = ai.chats.create({
-      model: "gemini-3.1-pro-preview",
-      config: {
-        systemInstruction: "You are Memoria, an AI assistant with long-term memory. Use the provided tools to store, retrieve, and manage memories for the user. Always retrieve context if the user asks about past conversations or facts. When a tool returns a result, incorporate it naturally into your response.",
-        tools: [{ functionDeclarations: [storeMemoryFunc, retrieveContextFunc, forgetMemoryFunc] }]
-      }
-    });
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'dummy_key' });
+      chatRef.current = ai.chats.create({
+        model: "gemini-3.1-pro-preview",
+        config: {
+          systemInstruction: "You are Memoria, an AI assistant with long-term memory. Use the provided tools to store, retrieve, and manage memories for the user. Always retrieve context if the user asks about past conversations or facts. When a tool returns a result, incorporate it naturally into your response.",
+          tools: [{ functionDeclarations: [storeMemoryFunc, retrieveContextFunc, forgetMemoryFunc] }]
+        }
+      });
+    } catch (e) {
+      console.error("Failed to initialize GoogleGenAI:", e);
+    }
   }, []);
 
   const executeTool = async (name: string, args: any) => {
@@ -103,16 +107,16 @@ export default function ChatInterface() {
         const res = await fetch(`/api/memory/${userId}`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ text: args.text })
+          body: JSON.stringify({ text: args?.text || '' })
         });
         return await res.json();
       } else if (name === 'retrieveContext') {
-        const res = await fetch(`/api/memory/${userId}/context?query=${encodeURIComponent(args.query)}`, {
+        const res = await fetch(`/api/memory/${userId}/context?query=${encodeURIComponent(args?.query || '')}`, {
           headers
         });
         return await res.json();
       } else if (name === 'forgetMemory') {
-        const res = await fetch(`/api/memory/${userId}/${args.memoryId}`, {
+        const res = await fetch(`/api/memory/${userId}/${args?.memoryId || ''}`, {
           method: 'DELETE',
           headers
         });
@@ -125,6 +129,10 @@ export default function ChatInterface() {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+    if (!chatRef.current) {
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'system', text: 'Chat session not initialized. Please check your API key.' }]);
+      return;
+    }
 
     const userMsg: Message = { id: Date.now().toString(), role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
@@ -226,9 +234,9 @@ export default function ChatInterface() {
         </div>
         
         <div className="text-xs text-zinc-500 dark:text-zinc-400 font-mono bg-zinc-100 dark:bg-zinc-900 p-2 rounded">
-          {tc.name === 'storeMemory' && `"${tc.args.text}"`}
-          {tc.name === 'retrieveContext' && `Query: "${tc.args.query}"`}
-          {tc.name === 'forgetMemory' && `ID: ${tc.args.memoryId}`}
+          {tc.name === 'storeMemory' && `"${tc.args?.text || ''}"`}
+          {tc.name === 'retrieveContext' && `Query: "${tc.args?.query || ''}"`}
+          {tc.name === 'forgetMemory' && `ID: ${tc.args?.memoryId || ''}`}
         </div>
 
         {tc.status === 'success' && tc.result && (
