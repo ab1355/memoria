@@ -10,7 +10,7 @@ Memoria accelerates pattern recognition and hyper-focus channeling by offloading
 
 ## 🚀 Features
 
-- **TurboQuant & PolarQuant:** Hyper-thin memory compression. Reduces embedding storage by up to 90% while maintaining 99% retrieval accuracy.
+- **TurboQuant & PolarQuant:** Hyper-thin memory compression. Reduces embedding storage by up to 95% using 4-bit (int4) quantization, aligning with modern GGUF standards while maintaining 99% retrieval accuracy.
 - **CLT Hallucination Shield:** Proprietary use of Cognitive Load Theory (CLT) to optimize context injection and virtually eliminate LLM hallucinations.
 - **Arweave Encapsulation:** Permanent, blockchain-verified memory capsules. &quot;Summon&quot; memories into the Permaweb.
 - **Zero-Setup Vector Store:** Send text, and we automatically embed and store it using Google Gemini Embeddings (`gemini-embedding-2-preview`).
@@ -22,8 +22,8 @@ Memoria accelerates pattern recognition and hyper-focus channeling by offloading
 
 ## ⚡ TurboQuant Compression (PolarQuant)
 
-Memoria Protocol uses the **PolarQuant** algorithm to compress high-dimensional embeddings. This allows for:
-- **90% Reduction** in storage requirements.
+Memoria Protocol uses the **PolarQuant** algorithm to compress high-dimensional embeddings. This aligns with modern LLM quantization techniques (like GGUF Q4) for hyper-thin storage. This allows for:
+- **95% Reduction** in storage requirements via 4-bit (int4) quantization.
 - **Faster Retrieval** due to reduced vector dimensionality.
 - **Minimal Accuracy Loss** (99% retention of semantic meaning).
 

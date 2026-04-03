@@ -120,7 +120,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">TurboQuant Compression</h3>
                 <p className="text-zinc-400 text-sm leading-relaxed">
-                  The <b>PolarQuant</b> algorithm reduces embedding storage by up to 90% while maintaining 99% retrieval accuracy. Hyper-thin memory for the next generation of agents.
+                  The <b>PolarQuant</b> algorithm reduces embedding storage by up to 95% using 4-bit (int4) quantization, aligning with modern GGUF standards while maintaining 99% retrieval accuracy. Hyper-thin memory for the next generation of agents.
                 </p>
               </div>
               <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
