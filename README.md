@@ -48,6 +48,18 @@ Because of the 4-bit quantization, Memoria is designed to run locally alongside 
 - **1 Million Memories:** **~1 GB** (Runs on a standard laptop. Enough for a full "C-Suite" of agents).
 - **1 Billion Memories:** **~1 TB** (Enterprise scale via the built-in ClickHouse integration).
 
+## 💸 Embedding Economics (Google Gemini)
+
+Memoria leverages Google's `gemini-embedding-2-preview` for state-of-the-art multimodal embeddings at microscopic costs.
+
+- **Free Tier:** 1,500 requests per day completely free via Google AI Studio (perfect for personal agents).
+- **Paid Tier (Pay-As-You-Go):**
+  - **Text:** ~$0.00002 per 1,000 characters (~$0.10 to embed 10,000 journal entries).
+  - **Images:** ~$0.00002 per image (~$0.02 to embed 1,000 images).
+  - **Audio/Video:** ~$0.00002 per second (~$0.07 to embed an hour of media).
+
+You can embed an agent's entire lifetime of thoughts, a library of reference books, and hundreds of case study videos for under $1.00.
+
 ## 🏛️ Arweave Encapsulation
 
 Critical memories can be &quot;summoned&quot; into permanent capsules on the Arweave blockchain. This ensures:
@@ -61,6 +73,32 @@ Memoria Protocol leverages a proprietary implementation of **Cognitive Load Theo
 - **Minimize Noise:** Prevent the model from being overwhelmed by irrelevant data.
 - **Eliminate Hallucinations:** Ensure the model stays grounded in the provided factual context.
 - **Optimize Token Usage:** Deliver the most impactful information within the model's context window.
+
+## ⚡ Hyper-Thin Runtime (Bun vs Node.js)
+
+Memoria is optimized to run on [Bun](https://bun.sh/) for maximum performance and minimal disk usage, though standard Node.js is fully supported.
+
+**Why use Bun?**
+- **Zero-Byte Duplicate `node_modules`:** Bun uses a global cache and hard links. If you spin up 10 different Memoria instances for 10 different agents, they all point to the exact same physical files. Your `node_modules` takes up 0 extra bytes of disk space.
+- **Lightning Fast Boot:** Starts up to 4x faster than Node.js, using Apple's JavaScriptCore engine for a smaller baseline memory footprint.
+
+**Option A: Run with Bun (Recommended)**
+```bash
+# 1. Install Bun
+curl -fsSL https://bun.sh/install | bash
+
+# 2. Install dependencies (takes milliseconds)
+bun install
+
+# 3. Start the server
+bun run dev
+```
+
+**Option B: Run with Node.js / NPM**
+```bash
+npm install
+npm run dev
+```
 
 ## 🐳 1-Click Deployment (Docker & Akash)
 
@@ -226,6 +264,6 @@ As part of the 371-OS autonomous business ecosystem, Memoria integrates with our
 
 ## 🛠️ Tech Stack
 
-- **Runtime:** Node.js (Next.js 15 App Router) - *Ready for Bun optimization*
+- **Runtime:** Bun (Recommended) or Node.js (Next.js 15 App Router)
 - **Styling:** Tailwind CSS v4
 - **AI/Embeddings:** `@google/genai` (`gemini-embedding-2-preview`)

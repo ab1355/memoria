@@ -156,7 +156,7 @@ export default function Home() {
       </main>
 
       <footer className="py-8 border-t border-zinc-800/50 text-center text-sm text-zinc-500">
-        <p>Built with Next.js, Google Gemini, and Arweave. Part of the 371-OS Ecosystem.</p>
+        <p>Built with Next.js, Bun, Google Gemini, and Arweave. Part of the 371-OS Ecosystem.</p>
       </footer>
     </div>
   );
